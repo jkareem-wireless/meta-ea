@@ -27,6 +27,7 @@ IMAGE_INSTALL = "\
    v4l-utils \
    packagegroup-fsl-gstreamer1.0 \
    packagegroup-fsl-gstreamer1.0-full \
+   ${@bb.utils.contains('DISTRO_FEATURES', 'x11 wayland', 'weston-xwayland xterm', '', d)} \
    bluez5 \
    bluez5-noinst-tools \
    bluez5-obex \
