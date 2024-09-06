@@ -55,8 +55,7 @@ clean_up()
 #
 # Apply patches to recipes
 #
-patch -Np1 -r - sources/meta-imx/meta-sdk/conf/distro/include/fsl-imx-preferred-env.inc < sources/meta-ea/patches/0001-remove-fsl-preferred-provider.patch
-patch -Np1 -r - sources/meta-imx/meta-bsp/recipes-bsp/imx-mkimage/imx-boot_1.0.bb < sources/meta-ea/patches/0002-mx93-soc-rev0.patch
+patch -Np1 -r - sources/meta-imx/meta-imx-sdk/conf/distro/include/fsl-imx-preferred-env.inc < sources/meta-ea/patches/0001-remove-fsl-preferred-provider.patch
 
 # get command line options
 OLD_OPTIND=$OPTIND
@@ -122,19 +121,7 @@ imx8*)
     ;;
 esac
 
-# Cleanup previous meta-freescale/EULA overrides
-cd $CWD/sources/meta-freescale
-if [ -h EULA ]; then
-    echo Cleanup meta-freescale/EULA...
-    git checkout -- EULA
-fi
-if [ ! -f classes/fsl-eula-unpack.bbclass ]; then
-    echo Cleanup meta-freescale/classes/fsl-eula-unpack.bbclass...
-    git checkout -- classes/fsl-eula-unpack.bbclass
-fi
-cd -
-
-# Override the click-through in meta-freescale/EULA
+# Override the click-through in meta-freescale
 FSL_EULA_FILE=$CWD/sources/meta-imx/LICENSE.txt
 
 # Set up the basic yocto environment
@@ -166,11 +153,6 @@ echo "# Switch to Debian packaging and include package-management in the image" 
 echo "PACKAGE_CLASSES = \"package_deb\"" >> conf/local.conf
 echo "EXTRA_IMAGE_FEATURES += \"package-management\"" >> conf/local.conf
 
-# Removing 3g since mobile-broadband-provide-info package fails (fetch error).
-# The mobile-broadband package is included by the ofono package which in turn
-# is included if the 3g feature is set
-echo "DISTRO_FEATURES:remove = \"3g\"" >> conf/local.conf
-
 if [ ! -e $BUILD_DIR/conf/bblayers.conf.org ]; then
     cp $BUILD_DIR/conf/bblayers.conf $BUILD_DIR/conf/bblayers.conf.org
 else
@@ -178,15 +160,17 @@ else
 fi
 
 
-META_FSL_BSP_RELEASE="${CWD}/sources/meta-imx/meta-bsp"
+META_FSL_BSP_RELEASE="${CWD}/sources/meta-imx/meta-imx-bsp"
 
 echo "" >> $BUILD_DIR/conf/bblayers.conf
 echo "# i.MX Yocto Project Release layers" >> $BUILD_DIR/conf/bblayers.conf
-hook_in_layer meta-imx/meta-bsp
-hook_in_layer meta-imx/meta-sdk
-hook_in_layer meta-imx/meta-ml
-hook_in_layer meta-imx/meta-v2x
+hook_in_layer meta-imx/meta-imx-bsp
+hook_in_layer meta-imx/meta-imx-sdk
+hook_in_layer meta-imx/meta-imx-ml
+hook_in_layer meta-imx/meta-imx-v2x
 hook_in_layer meta-nxp-demo-experience
+hook_in_layer meta-matter/meta-nxp-matter-baseline
+hook_in_layer meta-matter/meta-nxp-openthread
 
 echo "" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \"\${BSPDIR}/sources/meta-arm/meta-arm\"" >> $BUILD_DIR/conf/bblayers.conf
@@ -215,7 +199,7 @@ fi
 echo "#Embedded Artists Yocto layer" >> $BUILD_DIR/conf/bblayers.conf
 echo "BBLAYERS += \" \${BSPDIR}/sources/meta-ea \"" >> $BUILD_DIR/conf/bblayers.conf
 
-echo "BBLAYERS += \" \${BSPDIR}/sources/meta-murata-wireless \"" >> $BUILD_DIR/conf/bblayers.conf
+#echo "BBLAYERS += \" \${BSPDIR}/sources/meta-murata-wireless \"" >> $BUILD_DIR/conf/bblayers.conf
 
 cd  $BUILD_DIR
 clean_up
